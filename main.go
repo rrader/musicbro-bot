@@ -105,7 +105,11 @@ func GetLikes(chatId int64, messageId int, name string) int {
 			val, _ := item.Value()
 			if val != nil {
 				prevValue = string(val)
-				users = strings.Split(prevValue, ",")
+				if prevValue == "" {
+					likesNum = 0
+				} else {
+					users = strings.Split(prevValue, ",")
+				}
 			}
 		}
 
@@ -135,16 +139,38 @@ func SetLikes(chatId int64, messageId int, userId int, name string, value int) {
 			}
 		}
 
+		isLiked := false
 		userIdStr := strconv.Itoa(userId)
 		for _, user := range users {
 			if user == userIdStr {
-				// user has already liked this post
-				return nil
+				// user has already liked this post: UNLIKE
+				isLiked = true
 			}
 		}
 
-		newValue := fmt.Sprintf("%s,%s", prevValue, userIdStr)
-		err := txn.Set([]byte(key), []byte(newValue))
+		var newValue string
+		if isLiked {
+			// unlike
+			for _, user := range users {
+				if user == "" {
+					continue
+				}
+
+				if user != userIdStr {
+					newValue = fmt.Sprintf("%s,%s", user, newValue)
+				}
+			}
+		} else {
+			// like
+			newValue = fmt.Sprintf("%s,%s", userIdStr, prevValue)
+		}
+
+		var err error
+		if newValue == "" {
+			err = txn.Delete([]byte(key))
+		} else {
+			err = txn.Set([]byte(key), []byte(newValue))
+		}
 		if err != nil {
 			log.Fatal(err)
 		}
