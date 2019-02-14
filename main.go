@@ -64,7 +64,7 @@ func main() {
 				update.CallbackQuery.Message.MessageID,
 				update.CallbackQuery.From.ID,
 				update.CallbackQuery.Data,
-				currentValue + 1,
+				currentValue+1,
 			)
 
 			likes := GetLikes(
@@ -109,7 +109,7 @@ func GetLikes(chatId int64, messageId int, name string) int {
 			}
 		}
 
-		likesNum = len(users)
+		likesNum = len(users) - 1
 
 		return nil
 	})
@@ -144,7 +144,7 @@ func SetLikes(chatId int64, messageId int, userId int, name string, value int) {
 		}
 
 		newValue := fmt.Sprintf("%s,%s", prevValue, userIdStr)
-		err := txn.Set([]byte(key),[]byte(newValue))
+		err := txn.Set([]byte(key), []byte(newValue))
 		if err != nil {
 			log.Fatal(err)
 		}
