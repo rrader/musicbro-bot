@@ -36,6 +36,8 @@ func ProcessMessage(update tgbotapi.Update) {
 	playlistUrl := buildPlaylistUrl(videoId)
 
 	if videoId != "" {
+		AddVideoToPlaylist(videoId)
+
 		markup := buildKeyboardMarkup(
 			update.ChannelPost.Chat.ID,
 			update.ChannelPost.MessageID,
