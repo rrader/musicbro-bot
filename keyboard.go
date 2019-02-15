@@ -5,6 +5,7 @@ import (
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -20,41 +21,25 @@ func ProcessButtonPress(update tgbotapi.Update) {
 		update.CallbackQuery.From.ID,
 		update.CallbackQuery.Data,
 	)
+	videoId := findYoutubeVideoID(update)
+	playlistUrl := buildPlaylistUrl(videoId)
 	edit := tgbotapi.NewEditMessageReplyMarkup(
 		chatId,
 		messageId,
-		buildKeyboardMarkup(chatId, messageId),
+		buildKeyboardMarkup(chatId, messageId, playlistUrl),
 	)
 	BOT.Send(edit)
 }
 
 func ProcessMessage(update tgbotapi.Update) {
-	shouldAddLikes := false
-	if update.ChannelPost.Entities != nil {
-		for _, entity := range *update.ChannelPost.Entities {
-			if entity.Type == "url" {
-				urlStr := string(([]rune(update.ChannelPost.Text))[entity.Offset : entity.Offset+entity.Length])
+	videoId := findYoutubeVideoID(update)
+	playlistUrl := buildPlaylistUrl(videoId)
 
-				u, err := url.Parse(urlStr)
-				if err != nil {
-					continue
-				}
-
-				if strings.Contains(u.Host, "youtube.com") {
-					log.Printf("YouTube: %s", urlStr)
-
-					AddVideoToPlaylist(u.Query().Get("v"))
-
-					shouldAddLikes = true
-				}
-			}
-		}
-	}
-
-	if shouldAddLikes {
+	if videoId != "" {
 		markup := buildKeyboardMarkup(
 			update.ChannelPost.Chat.ID,
 			update.ChannelPost.MessageID,
+			playlistUrl,
 		)
 
 		edit := tgbotapi.NewEditMessageReplyMarkup(
@@ -66,7 +51,49 @@ func ProcessMessage(update tgbotapi.Update) {
 	}
 }
 
-func buildKeyboardMarkup(chatId int64, messageId int) tgbotapi.InlineKeyboardMarkup {
+func buildPlaylistUrl(videoId string) string {
+	playlist := os.Getenv("YOUTUBE_PLAYLIST")
+	return fmt.Sprintf(
+		"https://www.youtube.com/watch?list=%s&v=%s",
+		playlist,
+		videoId,
+	)
+}
+
+func findYoutubeVideoID(update tgbotapi.Update) string {
+	videoId := ""
+	text := ""
+	var entities *[]tgbotapi.MessageEntity
+	if update.ChannelPost != nil {
+		entities = update.ChannelPost.Entities
+		text = update.ChannelPost.Text
+	}
+	if update.CallbackQuery != nil {
+		entities = update.CallbackQuery.Message.Entities
+		text = update.CallbackQuery.Message.Text
+	}
+
+	if entities != nil {
+		for _, entity := range *entities {
+			if entity.Type == "url" {
+				urlStr := string(([]rune(text))[entity.Offset : entity.Offset+entity.Length])
+
+				u, err := url.Parse(urlStr)
+				if err != nil {
+					continue
+				}
+
+				if strings.Contains(u.Host, "youtube.com") {
+					log.Printf("YouTube: %s", urlStr)
+					videoId = u.Query().Get("v")
+				}
+			}
+		}
+	}
+	return videoId
+}
+
+func buildKeyboardMarkup(chatId int64, messageId int, link string) tgbotapi.InlineKeyboardMarkup {
 	btnLikeVal := GetLikes(chatId, messageId, LIKE)
 	btnNeutralVal := GetLikes(chatId, messageId, NEUTRAL)
 
@@ -83,6 +110,12 @@ func buildKeyboardMarkup(chatId int64, messageId int) tgbotapi.InlineKeyboardMar
 				{
 					Text:         btnNeutralText,
 					CallbackData: &NEUTRAL,
+				},
+			},
+			{
+				{
+					Text: "▶️ Open in playlist",
+					URL:  &link,
 				},
 			},
 		},
