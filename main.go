@@ -31,6 +31,9 @@ func main() {
 	}
 	defer DB.Close()
 
+	// init youtube
+	ConnectYoutube()
+
 	BOT.Debug = true
 
 	log.Printf("Authorized on account %s", BOT.Self.UserName)

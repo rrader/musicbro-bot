@@ -43,6 +43,8 @@ func ProcessMessage(update tgbotapi.Update) {
 				if strings.Contains(u.Host, "youtube.com") {
 					log.Printf("YouTube: %s", urlStr)
 
+					AddVideoToPlaylist(u.Query().Get("v"))
+
 					shouldAddLikes = true
 				}
 			}
