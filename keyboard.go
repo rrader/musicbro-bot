@@ -21,7 +21,7 @@ func ProcessButtonPress(update tgbotapi.Update) {
 		update.CallbackQuery.From.ID,
 		update.CallbackQuery.Data,
 	)
-	videoId := findYoutubeVideoID(update)
+	videoId := findYoutubeVideoID(update, false)
 	playlistUrl := buildPlaylistUrl(videoId)
 	edit := tgbotapi.NewEditMessageReplyMarkup(
 		chatId,
@@ -32,12 +32,10 @@ func ProcessButtonPress(update tgbotapi.Update) {
 }
 
 func ProcessMessage(update tgbotapi.Update) {
-	videoId := findYoutubeVideoID(update)
+	videoId := findYoutubeVideoID(update, true)
 	playlistUrl := buildPlaylistUrl(videoId)
 
 	if videoId != "" {
-		AddVideoToPlaylist(videoId)
-
 		markup := buildKeyboardMarkup(
 			update.ChannelPost.Chat.ID,
 			update.ChannelPost.MessageID,
@@ -62,7 +60,7 @@ func buildPlaylistUrl(videoId string) string {
 	)
 }
 
-func findYoutubeVideoID(update tgbotapi.Update) string {
+func findYoutubeVideoID(update tgbotapi.Update, addToPlaylist bool) string {
 	videoId := ""
 	text := ""
 	var entities *[]tgbotapi.MessageEntity
@@ -88,6 +86,10 @@ func findYoutubeVideoID(update tgbotapi.Update) string {
 				if strings.Contains(u.Host, "youtube.com") {
 					log.Printf("YouTube: %s", urlStr)
 					videoId = u.Query().Get("v")
+
+					if addToPlaylist {
+						AddVideoToPlaylist(videoId)
+					}
 				}
 			}
 		}
