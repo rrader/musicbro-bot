@@ -61,6 +61,7 @@ func buildPlaylistUrl(videoId string) string {
 }
 
 func findYoutubeVideoID(update tgbotapi.Update, addToPlaylist bool) string {
+	firstVideoIdInPost := ""
 	videoId := ""
 	text := ""
 	var entities *[]tgbotapi.MessageEntity
@@ -90,11 +91,15 @@ func findYoutubeVideoID(update tgbotapi.Update, addToPlaylist bool) string {
 					if addToPlaylist {
 						AddVideoToPlaylist(videoId)
 					}
+
+					if firstVideoIdInPost == "" {
+						firstVideoIdInPost = videoId
+					}
 				}
 			}
 		}
 	}
-	return videoId
+	return firstVideoIdInPost
 }
 
 func buildKeyboardMarkup(chatId int64, messageId int, link string) tgbotapi.InlineKeyboardMarkup {
