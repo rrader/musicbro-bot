@@ -1,5 +1,6 @@
 package main
 
+
 import (
 	"encoding/json"
 	"fmt"
@@ -104,7 +105,7 @@ func handleError(err error, message string) {
 		message = "Error making API call"
 	}
 	if err != nil {
-		log.Fatalf(message+": %v", err.Error())
+		log.Fatalf(message + ": %v", err.Error())
 	}
 }
 
@@ -113,12 +114,13 @@ func channelsListByUsername(service *youtube.Service, part string, forUsername s
 	call = call.ForUsername(forUsername)
 	response, err := call.Do()
 	handleError(err, "")
-	fmt.Println(fmt.Sprintf("This channel's ID is %s. Its title is '%s', "+
+	fmt.Println(fmt.Sprintf("This channel's ID is %s. Its title is '%s', " +
 		"and it has %d views.",
 		response.Items[0].Id,
 		response.Items[0].Snippet.Title,
 		response.Items[0].Statistics.ViewCount))
 }
+
 
 func ConnectYoutube() {
 	ctx := context.Background()
@@ -148,6 +150,7 @@ func ConnectYoutube() {
 
 //
 
+
 func addPropertyToResource(ref map[string]interface{}, keys []string, value string, count int) map[string]interface{} {
 	for k := count; k < (len(keys) - 1); k++ {
 		switch val := ref[keys[k]].(type) {
@@ -159,7 +162,7 @@ func addPropertyToResource(ref map[string]interface{}, keys []string, value stri
 		}
 	}
 	// Only include properties that have values.
-	if count == len(keys)-1 && value != "" {
+	if (count == len(keys) - 1 && value != "") {
 		valueKey := keys[len(keys)-1]
 		if valueKey[len(valueKey)-2:] == "[]" {
 			ref[valueKey[0:len(valueKey)-2]] = strings.Split(value, ",")
@@ -208,11 +211,13 @@ func playlistItemsInsert(service *youtube.Service, part string, res string) {
 func AddVideoToPlaylist(videoId string) {
 	playlist := os.Getenv("YOUTUBE_PLAYLIST")
 
-	properties := map[string]string{
-		"snippet.playlistId":         playlist,
-		"snippet.resourceId.kind":    "youtube#video",
-		"snippet.resourceId.videoId": videoId,
+	if playlist != "" {
+		properties := map[string]string{
+			"snippet.playlistId":         playlist,
+			"snippet.resourceId.kind":    "youtube#video",
+			"snippet.resourceId.videoId": videoId,
+		}
+		res := createResource(properties)
+		playlistItemsInsert(YoutubeService, "snippet", res)
 	}
-	res := createResource(properties)
-	playlistItemsInsert(YoutubeService, "snippet", res)
 }
