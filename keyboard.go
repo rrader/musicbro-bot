@@ -84,10 +84,16 @@ func findYoutubeVideoID(update tgbotapi.Update, addToPlaylist bool) string {
 					continue
 				}
 
+				videoId = ""
 				if strings.Contains(u.Host, "youtube.com") {
 					log.Printf("YouTube: %s", urlStr)
 					videoId = u.Query().Get("v")
+				}
+				if strings.Contains(u.Host, "youtu.be") {
+					videoId = u.Path[1:]
+				}
 
+				if videoId != "" {
 					if addToPlaylist {
 						AddVideoToPlaylist(videoId)
 					}
