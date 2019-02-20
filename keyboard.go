@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
+	"mvdan.cc/xurls/v2"
 	"net/url"
 	"os"
 	"strings"
@@ -64,43 +65,38 @@ func findYoutubeVideoID(update tgbotapi.Update, addToPlaylist bool) string {
 	firstVideoIdInPost := ""
 	videoId := ""
 	text := ""
-	var entities *[]tgbotapi.MessageEntity
 	if update.ChannelPost != nil {
-		entities = update.ChannelPost.Entities
 		text = update.ChannelPost.Text
 	}
 	if update.CallbackQuery != nil {
-		entities = update.CallbackQuery.Message.Entities
 		text = update.CallbackQuery.Message.Text
 	}
 
-	if entities != nil {
-		for _, entity := range *entities {
-			if entity.Type == "url" {
-				urlStr := string(([]rune(text))[entity.Offset : entity.Offset+entity.Length])
+	urls := xurls.Strict().FindAllString(text, -1)
+	if urls != nil {
+		for _, urlStr := range urls {
+			//urlStr := string(([]rune(text))[entity.Offset : entity.Offset+entity.Length])
+			u, err := url.Parse(urlStr)
+			if err != nil {
+				continue
+			}
 
-				u, err := url.Parse(urlStr)
-				if err != nil {
-					continue
+			videoId = ""
+			if strings.Contains(u.Host, "youtube.com") {
+				log.Printf("YouTube: %s", urlStr)
+				videoId = u.Query().Get("v")
+			}
+			if strings.Contains(u.Host, "youtu.be") {
+				videoId = u.Path[1:]
+			}
+
+			if videoId != "" {
+				if addToPlaylist {
+					AddVideoToPlaylist(videoId)
 				}
 
-				videoId = ""
-				if strings.Contains(u.Host, "youtube.com") {
-					log.Printf("YouTube: %s", urlStr)
-					videoId = u.Query().Get("v")
-				}
-				if strings.Contains(u.Host, "youtu.be") {
-					videoId = u.Path[1:]
-				}
-
-				if videoId != "" {
-					if addToPlaylist {
-						AddVideoToPlaylist(videoId)
-					}
-
-					if firstVideoIdInPost == "" {
-						firstVideoIdInPost = videoId
-					}
+				if firstVideoIdInPost == "" {
+					firstVideoIdInPost = videoId
 				}
 			}
 		}

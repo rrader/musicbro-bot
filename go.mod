@@ -13,4 +13,5 @@ require (
 	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4 // indirect
 	golang.org/x/sys v0.0.0-20190213121743-983097b1a8a3 // indirect
 	google.golang.org/api v0.1.0
+	mvdan.cc/xurls/v2 v2.0.0
 )
