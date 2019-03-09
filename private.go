@@ -58,6 +58,7 @@ func ProcessPrivateMessage(update tgbotapi.Update) {
 
 			BOT.Send(msg)
 		}
+		SaveSchedulingCurrentlyMsg(update.Message.Chat.ID, "")
 		return
 	}
 
@@ -146,7 +147,8 @@ func buildKeyboardMarkupPrivate(draft ScheduledMessage) tgbotapi.InlineKeyboardM
 	draftId := draft.Id
 	scheduleText := "Запланировать отправку"
 	if draft.Timestamp > 0 {
-		scheduleText = fmt.Sprintf("Будет отправлено: %s (перепланировать)", time.Unix(draft.Timestamp, 0))
+		kievTime, _ := time.LoadLocation("Europe/Kiev")
+		scheduleText = fmt.Sprintf("Будет отправлено: %s (перепланировать)", time.Unix(draft.Timestamp, 0).In(kievTime))
 	}
 
 	schedule := fmt.Sprintf("%s#%s", SCHEDULE, draftId)
@@ -203,9 +205,10 @@ func ProcessPrivateButtonPress(update tgbotapi.Update) {
 	}
 	if parts[0] == SCHEDULE {
 		SaveSchedulingCurrentlyMsg(update.CallbackQuery.Message.Chat.ID, parts[1])
+		kievTime, _ := time.LoadLocation("Europe/Kiev")
 		msg := tgbotapi.NewMessage(
 			update.CallbackQuery.Message.Chat.ID,
-			fmt.Sprintf("Введи дату (например %s)", now.BeginningOfMinute()),
+			fmt.Sprintf("Введи дату (например %s)", now.BeginningOfMinute().In(kievTime)),
 		)
 
 		BOT.Send(msg)
