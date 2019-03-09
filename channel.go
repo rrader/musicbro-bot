@@ -3,17 +3,13 @@ package main
 import (
 	"fmt"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
-	"log"
-	"mvdan.cc/xurls/v2"
-	"net/url"
 	"os"
-	"strings"
 )
 
 var LIKE = "LIKE"
 var NEUTRAL = "NEUTRAL"
 
-func ProcessButtonPress(update tgbotapi.Update) {
+func ProcessChannelButtonPress(update tgbotapi.Update) {
 	chatId := update.CallbackQuery.Message.Chat.ID
 	messageId := update.CallbackQuery.Message.MessageID
 	SetLikes(
@@ -22,7 +18,7 @@ func ProcessButtonPress(update tgbotapi.Update) {
 		update.CallbackQuery.From.ID,
 		update.CallbackQuery.Data,
 	)
-	videoId := findYoutubeVideoID(update, false)
+	videoId := findYoutubeVideoIDInUpdate(update, false)
 	playlistUrl := buildPlaylistUrl(videoId)
 	edit := tgbotapi.NewEditMessageReplyMarkup(
 		chatId,
@@ -32,8 +28,10 @@ func ProcessButtonPress(update tgbotapi.Update) {
 	BOT.Send(edit)
 }
 
-func ProcessMessage(update tgbotapi.Update) {
-	videoId := findYoutubeVideoID(update, true)
+func ProcessChannelMessage(update tgbotapi.Update) {
+	SaveMainChatID(update.ChannelPost.Chat.ID)
+
+	videoId := findYoutubeVideoIDInUpdate(update, true)
 	playlistUrl := buildPlaylistUrl(videoId)
 
 	if videoId != "" {
@@ -61,9 +59,7 @@ func buildPlaylistUrl(videoId string) string {
 	)
 }
 
-func findYoutubeVideoID(update tgbotapi.Update, addToPlaylist bool) string {
-	firstVideoIdInPost := ""
-	videoId := ""
+func findYoutubeVideoIDInUpdate(update tgbotapi.Update, addToPlaylist bool) string {
 	text := ""
 	if update.ChannelPost != nil {
 		text = update.ChannelPost.Text
@@ -72,35 +68,7 @@ func findYoutubeVideoID(update tgbotapi.Update, addToPlaylist bool) string {
 		text = update.CallbackQuery.Message.Text
 	}
 
-	urls := xurls.Strict().FindAllString(text, -1)
-	if urls != nil {
-		for _, urlStr := range urls {
-			//urlStr := string(([]rune(text))[entity.Offset : entity.Offset+entity.Length])
-			u, err := url.Parse(urlStr)
-			if err != nil {
-				continue
-			}
-
-			videoId = ""
-			if strings.Contains(u.Host, "youtube.com") {
-				log.Printf("YouTube: %s", urlStr)
-				videoId = u.Query().Get("v")
-			}
-			if strings.Contains(u.Host, "youtu.be") {
-				videoId = u.Path[1:]
-			}
-
-			if videoId != "" {
-				if addToPlaylist {
-					AddVideoToPlaylist(videoId)
-				}
-
-				if firstVideoIdInPost == "" {
-					firstVideoIdInPost = videoId
-				}
-			}
-		}
-	}
+	firstVideoIdInPost := FindVideoInText(text, addToPlaylist)
 	return firstVideoIdInPost
 }
 

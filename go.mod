@@ -5,6 +5,8 @@ require (
 	github.com/dgraph-io/badger v1.5.4
 	github.com/dgryski/go-farm v0.0.0-20190104051053-3adb47b1fb0f // indirect
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
+	github.com/jinzhu/now v1.0.0
+	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/stretchr/testify v1.3.0 // indirect
 	github.com/technoweenie/multipartstreamer v1.0.1 // indirect

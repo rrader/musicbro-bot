@@ -41,14 +41,24 @@ func main() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
+	go Scheduler()
 	updates, err := BOT.GetUpdatesChan(u)
 
 	for update := range updates {
 		if update.ChannelPost != nil {
-			ProcessMessage(update)
+			ProcessChannelMessage(update)
 		}
 		if update.CallbackQuery != nil {
-			ProcessButtonPress(update)
+			if update.CallbackQuery.Message.Chat.Type == "private" {
+				ProcessPrivateButtonPress(update)
+			} else {
+				ProcessChannelButtonPress(update)
+			}
+		}
+		if update.Message != nil {
+			if update.Message.Chat.Type == "private" {
+				ProcessPrivateMessage(update)
+			}
 		}
 	}
 }
