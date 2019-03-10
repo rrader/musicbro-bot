@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/araddon/dateparse"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/jinzhu/now"
 	"log"
@@ -74,7 +75,7 @@ func ProcessPrivateMessage(update tgbotapi.Update) {
 			SaveSchedulingCurrentlyMsg(update.Message.Chat.ID, "")
 			return
 		}
-		dt, err := now.Parse(update.Message.Text)
+		dt, err := dateparse.ParseAny(update.Message.Text)
 		if err != nil {
 			msg := tgbotapi.NewMessage(
 				update.Message.Chat.ID,
