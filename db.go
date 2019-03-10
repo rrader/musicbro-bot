@@ -6,6 +6,7 @@ import (
 	"github.com/dgraph-io/badger"
 	"github.com/nu7hatch/gouuid"
 	"log"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -142,6 +143,9 @@ func GetScheduledList(chatId int64) []ScheduledMessage {
 		log.Fatal(err)
 	}
 
+	sort.SliceStable(list, func(i, j int) bool {
+		return list[i].Timestamp < list[j].Timestamp
+	})
 	return list
 }
 
