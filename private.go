@@ -97,6 +97,7 @@ func ProcessPrivateMessage(update tgbotapi.Update) {
 
 		RemoveScheduledMessage(currentMessage.Id)
 		currentMessage.Timestamp = dt.Unix()
+		currentMessage.IsPublished = true
 
 		currentMessage.Id = GenerateScheduledMessageID(GetMainChatID())
 		SaveScheduledMessage(currentMessage)
